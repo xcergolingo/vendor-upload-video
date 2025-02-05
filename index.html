@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Movie Upload and Check</title>
+  <title>Video Upload and Check</title>
   <style>
     /* General reset and body style */
     body {
@@ -12,13 +12,14 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f8f9fa;
       color: #5a5c69;
+      text-align: center; /* Center the body content */
     }
 
     /* Navigation bar */
     nav {
       display: flex;
       align-items: center;
-	  justify-content: center;
+      justify-content: center; /* Keeps navigation items centered horizontally */
       background-color: #343a40;
       padding: 10px 20px;
     }
@@ -44,6 +45,7 @@
       padding: 20px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       border-radius: 5px;
+      text-align: center; /* Center text in the container */
     }
 
     /* Menu-content display toggling */
@@ -63,18 +65,24 @@
     .upload-form {
       display: flex;
       flex-direction: column;
+      align-items: center; /* Center form inputs and buttons */
       margin-top: 10px;
     }
     .upload-form label {
       margin-bottom: 5px;
       font-weight: 600;
+      text-align: left;
+      width: 250px;
     }
     .upload-form input[type="file"],
+    .upload-form input[type="text"],
+    .upload-form input[type="number"],
     .upload-form select {
       margin-bottom: 15px;
       padding: 5px;
       border: 1px solid #ccc;
       border-radius: 3px;
+      width: 250px;
     }
     .upload-form button {
       width: 120px;
@@ -111,6 +119,8 @@
       list-style-type: none;
       padding: 0;
       margin: 15px 0;
+      text-align: left; /* List items often look better left-aligned */
+      display: inline-block; /* Keep the list itself in the center */
     }
     .movie-list li {
       margin-bottom: 8px;
@@ -147,19 +157,29 @@
   <!-- Navigation with site logo -->
   <nav>
     <img src="site-logo.png" alt="Site Logo" class="site-logo">
-    <a href="#" id="upload-movie-menu">Upload Movie</a>
-    <a href="#" id="check-movie-menu">Check Movie</a>
+    <a href="#" id="upload-movie-menu">Upload Video</a>
+    <a href="#" id="check-movie-menu">Check Video</a>
   </nav>
 
   <!-- Main content container -->
   <div class="container">
 
     <div id="upload-movie" class="menu-content active">
-      <h2>Upload Movie</h2>
+      <h2>Upload Video</h2>
       <form id="uploadForm" class="upload-form">
+        <!-- Optional Theme/Title -->
+        <label for="themeTitle">Theme/Title (Optional)</label>
+        <input type="text" id="themeTitle" placeholder="My video title...">
+
+        <!-- Optional Index -->
+        <label for="indexInput">Index (Optional)</label>
+        <input type="number" id="indexInput" placeholder="0">
+
+        <!-- File chooser -->
         <label for="movieFile">Choose File</label>
         <input type="file" id="movieFile" required>
 
+        <!-- Language selector -->
         <label for="language">Choose Input Language</label>
         <select id="language">
           <option value="en">English</option>
@@ -181,18 +201,13 @@
           <option value="vi">Vietnamese</option>
         </select>
 
-        <label for="output_language">Choose Output Language</label>
-        <select id="output_language">
-          <option value="same">Same As Input</option>
-        </select>
-
         <div class="spinner" id="spinner"></div>
         <button type="submit">Upload</button>
       </form>
     </div>
 
     <div id="check-movie" class="menu-content">
-      <h3>Movie might be delayed, check later if not here:</h3>
+      <h3>Video might be delayed, check later if not here:</h3>
       <ul id="movieList" class="movie-list"></ul>
       <div class="pagination">
         <a href="#" id="prevPage" class="disabled">Previous</a>
@@ -221,18 +236,35 @@
       e.preventDefault();
       const fileInput = document.getElementById('movieFile');
       const language = document.getElementById('language').value;
-      const output_language = document.getElementById('output_language').value;
+
+      // Grab optional fields:
+      const themeTitle = document.getElementById('themeTitle').value.trim();
+      const indexInput = document.getElementById('indexInput').value.trim();
+
       const file = fileInput.files[0];
       const fileName = file.name;
 
       // Show spinner
       document.getElementById('spinner').style.display = 'block';
 
+      // Build the request body to include optional fields if not empty
+      const requestBody = {
+        user_name: 'testuser',
+        filename: fileName,
+        lang: language
+      };
+      if (themeTitle !== '') {
+        requestBody.theme_title = themeTitle;
+      }
+      if (indexInput !== '') {
+        requestBody.index = indexInput;
+      }
+
       // Get Presigned URL
       fetch('https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/generate-upload-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 'user_name': 'testuser', 'filename': fileName, 'lang': language, 'output_lang': output_language })
+        body: JSON.stringify(requestBody)
       })
       .then(response => response.json())
       .then(data => {
