@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Movie Upload and Check</title>
+  <style>
+    /* General reset and body style */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      color: #5a5c69;
+    }
+
+    /* Navigation bar */
+    nav {
+      display: flex;
+      align-items: center;
+	  justify-content: center;
+      background-color: #343a40;
+      padding: 10px 20px;
+    }
+    nav img.site-logo {
+      height: 40px;
+      margin-right: 20px;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #ffffff;
+      font-weight: 500;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    /* Main container */
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 5px;
+    }
+
+    /* Menu-content display toggling */
+    .menu-content {
+      display: none;
+    }
+    .menu-content.active {
+      display: block;
+    }
+
+    /* Headings */
+    h2, h3 {
+      color: #4e73df;
+    }
+
+    /* Upload form styling */
+    .upload-form {
+      display: flex;
+      flex-direction: column;
+      margin-top: 10px;
+    }
+    .upload-form label {
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .upload-form input[type="file"],
+    .upload-form select {
+      margin-bottom: 15px;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+    .upload-form button {
+      width: 120px;
+      padding: 10px;
+      background-color: #007bff;
+      color: #ffffff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .upload-form button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Spinner animation */
+    .spinner {
+      display: none;
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 15px auto;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Movie list and pagination */
+    .movie-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 15px 0;
+    }
+    .movie-list li {
+      margin-bottom: 8px;
+    }
+    .movie-list a {
+      color: #4e73df;
+      text-decoration: none;
+    }
+    .movie-list a:hover {
+      text-decoration: underline;
+    }
+
+    .pagination {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .pagination a {
+      margin: 0 5px;
+      padding: 5px 10px;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 3px;
+    }
+    .pagination a.disabled {
+      background: #ccc;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation with site logo -->
+  <nav>
+    <img src="site-logo.png" alt="Site Logo" class="site-logo">
+    <a href="#" id="upload-movie-menu">Upload Movie</a>
+    <a href="#" id="check-movie-menu">Check Movie</a>
+  </nav>
+
+  <!-- Main content container -->
+  <div class="container">
+
+    <div id="upload-movie" class="menu-content active">
+      <h2>Upload Movie</h2>
+      <form id="uploadForm" class="upload-form">
+        <label for="movieFile">Choose File</label>
+        <input type="file" id="movieFile" required>
+
+        <label for="language">Choose Input Language</label>
+        <select id="language">
+          <option value="en">English</option>
+          <option value="zh">Chinese</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="it">Italian</option>
+          <option value="pt">Portuguese</option>
+          <option value="nl">Dutch</option>
+          <option value="hi">Hindi</option>
+          <option value="ja">Japanese</option>
+          <option value="fi">Finnish</option>
+          <option value="ko">Korean</option>
+          <option value="pl">Polish</option>
+          <option value="ru">Russian</option>
+          <option value="tr">Turkish</option>
+          <option value="uk">Ukrainian</option>
+          <option value="vi">Vietnamese</option>
+        </select>
+
+        <label for="output_language">Choose Output Language</label>
+        <select id="output_language">
+          <option value="same">Same As Input</option>
+        </select>
+
+        <div class="spinner" id="spinner"></div>
+        <button type="submit">Upload</button>
+      </form>
+    </div>
+
+    <div id="check-movie" class="menu-content">
+      <h3>Movie might be delayed, check later if not here:</h3>
+      <ul id="movieList" class="movie-list"></ul>
+      <div class="pagination">
+        <a href="#" id="prevPage" class="disabled">Previous</a>
+        <a href="#" id="nextPage">Next</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JavaScript Section -->
+  <script>
+    // Toggle between Upload and Check sections
+    document.getElementById('upload-movie-menu').addEventListener('click', function () {
+      document.getElementById('upload-movie').classList.add('active');
+      document.getElementById('check-movie').classList.remove('active');
+    });
+
+    document.getElementById('check-movie-menu').addEventListener('click', function () {
+      document.getElementById('check-movie').classList.add('active');
+      document.getElementById('upload-movie').classList.remove('active');
+      loadMovies();
+    });
+
+    // Upload form submission
+    document.getElementById('uploadForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('movieFile');
+      const language = document.getElementById('language').value;
+      const output_language = document.getElementById('output_language').value;
+      const file = fileInput.files[0];
+      const fileName = file.name;
+
+      // Show spinner
+      document.getElementById('spinner').style.display = 'block';
+
+      // Get Presigned URL
+      fetch('https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/generate-upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 'user_name': 'testuser', 'filename': fileName, 'lang': language, 'output_lang': output_language })
+      })
+      .then(response => response.json())
+      .then(data => {
+        const presignedUrl = data.body.url;
+
+        // Upload File to S3
+        return fetch(presignedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'video/mp4' },
+          body: file
+        });
+      })
+      .then(response => {
+        // Hide spinner
+        document.getElementById('spinner').style.display = 'none';
+        if (response.status === 200) {
+          alert('File uploaded successfully!');
+        } else {
+          alert('Failed to upload file.');
+        }
+      })
+      .catch(error => {
+        // Hide spinner on error
+        document.getElementById('spinner').style.display = 'none';
+        alert('Failed to get presigned URL or upload file.');
+      });
+    });
+
+    // Pagination and movie listing
+    let currentPage = 1;
+    const resultsPerPage = 10;
+
+    function loadMovies(page = 1) {
+      currentPage = page;
+      fetch('https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/list-latest-uploaded-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        const movies = data.body;
+        const totalMovies = movies.length;
+        const totalPages = Math.ceil(totalMovies / resultsPerPage);
+        const startIndex = (page - 1) * resultsPerPage;
+        const endIndex = Math.min(startIndex + resultsPerPage, totalMovies);
+
+        const movieList = document.getElementById('movieList');
+        movieList.innerHTML = '';
+
+        for (let i = startIndex; i < endIndex; i++) {
+          const movie = movies[i];
+          const listItem = document.createElement('li');
+          const link = document.createElement('a');
+          link.href = movie.url;
+          link.textContent = movie.name;
+          link.target = "_blank";
+          listItem.appendChild(link);
+          movieList.appendChild(listItem);
+        }
+
+        // Update pagination
+        document.getElementById('prevPage').classList.toggle('disabled', page === 1);
+        document.getElementById('nextPage').classList.toggle('disabled', page === totalPages);
+      });
+    }
+
+    document.getElementById('prevPage').addEventListener('click', function (e) {
+      e.preventDefault();
+      if (currentPage > 1) {
+        loadMovies(currentPage - 1);
+      }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', function (e) {
+      e.preventDefault();
+      loadMovies(currentPage + 1);
+    });
+  </script>
+
+</body>
+</html>
