@@ -270,10 +270,16 @@
       .then(data => {
         const presignedUrl = data.body.url;
 
+
+		// Determine the proper content type dynamically.
+		// You can either rely on file.type or check the file name extension
+		const contentType = file.type || 
+		   (file.name.toLowerCase().endsWith('.mov') ? 'video/quicktime' : 'video/mp4');
+	   
         // Upload File to S3
         return fetch(presignedUrl, {
           method: 'PUT',
-          headers: { 'Content-Type': 'video/mp4' },
+          headers: { 'Content-Type': contentType },
           body: file
         });
       })
