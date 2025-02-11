@@ -167,14 +167,7 @@
     <div id="upload-movie" class="menu-content active">
       <h2>Upload Video</h2>
       <form id="uploadForm" class="upload-form">
-        <!-- Optional Theme/Title -->
-        <label for="themeTitle">Theme/Title (Optional)</label>
-        <input type="text" id="themeTitle" placeholder="My video title...">
-
-        <!-- Optional Index -->
-        <label for="indexInput">Index (Optional)</label>
-        <input type="number" id="indexInput" placeholder="0">
-
+     
         <!-- File chooser -->
         <label for="movieFile">Choose File</label>
         <input type="file" id="movieFile" required>
@@ -200,6 +193,26 @@
           <option value="uk">Ukrainian</option>
           <option value="vi">Vietnamese</option>
         </select>
+
+        <!-- Optional Theme/Title -->
+        <label for="themeTitle">Title (Optional)</label>
+        <input type="text" id="themeTitle" placeholder="video title...">
+
+        <!-- Optional Index -->
+        <label for="indexInput">Index (Optional)</label>
+        <input type="number" id="indexInput" placeholder="0">
+		
+        <!-- Optional Tags -->
+        <label for="tags">Tags (Optional)</label>
+        <input type="text" id="tags" placeholder="comma separated tags">
+
+        <!-- Optional Weblink -->
+        <label for="weblink">Weblink (Optional)</label>
+        <input type="text" id="weblink" placeholder="www.youtube.com">
+
+        <!-- Optional Link Name -->
+        <label for="link_name">Link Name (Optional)</label>
+        <input type="text" id="link_name" placeholder="youtube">
 
         <div class="spinner" id="spinner"></div>
         <button type="submit">Upload</button>
@@ -240,6 +253,9 @@
       // Grab optional fields:
       const themeTitle = document.getElementById('themeTitle').value.trim();
       const indexInput = document.getElementById('indexInput').value.trim();
+      const tags = document.getElementById('tags').value.trim();
+      const weblink = document.getElementById('weblink').value.trim();
+      const linkName = document.getElementById('link_name').value.trim();
 
       const file = fileInput.files[0];
       const fileName = file.name;
@@ -247,7 +263,7 @@
       // Show spinner
       document.getElementById('spinner').style.display = 'block';
 
-      // Build the request body to include optional fields if not empty
+      // Build the request body to include optional fields if provided
       const requestBody = {
         user_name: 'testuser',
         filename: fileName,
@@ -258,6 +274,15 @@
       }
       if (indexInput !== '') {
         requestBody.index = indexInput;
+      }
+      if (tags !== '') {
+        requestBody.tags = tags;
+      }
+      if (weblink !== '') {
+        requestBody.weblink = weblink;
+      }
+      if (linkName !== '') {
+        requestBody.link_name = linkName;
       }
 
       // Get Presigned URL
@@ -270,11 +295,8 @@
       .then(data => {
         const presignedUrl = data.body.url;
 
-
-		// Determine the proper content type dynamically.
-		// You can either rely on file.type or check the file name extension
-		const contentType = file.type || 
-		   (file.name.toLowerCase().endsWith('.mov') ? 'video/quicktime' : 'video/mp4');
+        // Determine the proper content type dynamically
+        const contentType = file.type || (file.name.toLowerCase().endsWith('.mov') ? 'video/quicktime' : 'video/mp4');
 	   
         // Upload File to S3
         return fetch(presignedUrl, {
