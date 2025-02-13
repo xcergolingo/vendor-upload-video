@@ -460,7 +460,7 @@
         .then(function(data) {
           var presignedUrl = data.body.url;
           // Determine content-type. Allow fallback for .mov files.
-          var contentType = file.type || (file.name.toLowerCase().endsWith(".mov") ? "video/quicktime" : "video/mp4");
+          var contentType = file.name.toLowerCase().endsWith(".mp4") ? "video/mp4" : "application/octet-stream";
 
           // Use XMLHttpRequest (XHR) to handle the file upload.
           var xhr = new XMLHttpRequest();
