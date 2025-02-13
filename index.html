@@ -488,7 +488,7 @@
           .catch((error) => {
             console.log(error);
             document.getElementById("spinner").style.display = "none";
-            alert("Failed to get presigned URL or upload file.");
+            alert(error);
           });
       });
 
