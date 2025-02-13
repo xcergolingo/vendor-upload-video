@@ -272,18 +272,16 @@
 
       // Save tokens and expiration info in localStorage.
       function setSession(authResult) {
-        // Calculate when the token will expire (in ms). Here we override the Auth0 default if needed.
-        // We want to keep the session for 24 hours (86400000 ms)
+        // Set session for 24 hours (86400000 ms)
         var expiresAt = new Date().getTime() + 86400000;
         localStorage.setItem("idToken", authResult.idToken);
         localStorage.setItem("expiresAt", JSON.stringify(expiresAt));
-        // Save the email for later use.
         if (authResult.idTokenPayload && authResult.idTokenPayload.email) {
           localStorage.setItem("userEmail", authResult.idTokenPayload.email);
         }
       }
 
-      // Check whether the current session is still valid.
+      // Check if the session is still valid.
       function isAuthenticated() {
         var idToken = localStorage.getItem("idToken");
         var expiresAt = JSON.parse(localStorage.getItem("expiresAt") || "0");
@@ -295,10 +293,9 @@
       /////////////////////////////////////////////////////////
 
       // Replace with your Auth0 tenant details.
-	  var redirectUri = window.location.hostname === "localhost" 
-					  ? "http://localhost:8000" 
-					  : "https://vendor.golingoapp.com";
-					  
+      var redirectUri = window.location.hostname === "localhost" 
+                        ? "http://localhost:8000" 
+                        : "https://vendor.golingoapp.com";
       var auth0Client = new auth0.WebAuth({
         domain: "login.golingoapp.com",
         clientID: "CAbDNnKwXbemnPuMqg6R7ElN4F77IRA3",
@@ -306,16 +303,14 @@
         redirectUri: redirectUri
       });
 
-      // Global variable to hold the logged in user's email.
+      // Global variable for the logged-in user's email.
       var loggedInUserEmail = "";
 
-      // Check if the login result is in the URL hash (if just redirected from Auth0).
+      // Check for login result in URL hash.
       auth0Client.parseHash(function(err, authResult) {
         if (authResult && authResult.accessToken && authResult.idToken) {
-          // Save session info for 24 hours.
           setSession(authResult);
           loggedInUserEmail = authResult.idTokenPayload.email;
-          // Remove the hash from the URL.
           window.location.hash = "";
           afterLogin();
         } else if (err) {
@@ -323,13 +318,13 @@
         }
       });
 
-      // If the user is already authenticated (by checking localStorage), automatically “log in”
+      // Auto-login if already authenticated.
       if (isAuthenticated()) {
         loggedInUserEmail = localStorage.getItem("userEmail") || "";
         afterLogin();
       }
 
-      // Handle Login button click – using the popup mode to avoid redirection.
+      // Login button using popup mode.
       document.getElementById("login-button").addEventListener("click", function () {
         var email = document.getElementById("login-email").value.trim();
         var password = document.getElementById("login-password").value;
@@ -349,7 +344,6 @@
             return;
           }
           if (authResult && authResult.idTokenPayload) {
-            // Save the session for 24 hours.
             setSession(authResult);
             loggedInUserEmail = authResult.idTokenPayload.email;
             afterLogin();
@@ -357,7 +351,7 @@
         });
       });
 
-      // Handle Register button click – sign up the user.
+      // Registration button.
       document.getElementById("register-button").addEventListener("click", function () {
         var email = document.getElementById("login-email").value.trim();
         var password = document.getElementById("login-password").value;
@@ -379,17 +373,16 @@
         });
       });
 
-      // After login, hide the login container and show the main application.
+      // After login: hide login and show main app.
       function afterLogin() {
         document.getElementById("login-container").style.display = "none";
         document.getElementById("main-nav").style.display = "flex";
         document.getElementById("main-container").style.display = "block";
       }
 
-      // Logout – clears session info and reloads the page.
+      // Logout: clear session and reload.
       document.getElementById("logout-link").addEventListener("click", function (e) {
         e.preventDefault();
-        // Clear stored session information.
         localStorage.removeItem("idToken");
         localStorage.removeItem("expiresAt");
         localStorage.removeItem("userEmail");
@@ -400,7 +393,7 @@
       // MAIN APPLICATION JAVASCRIPT (Upload and List Videos)
       /////////////////////////////////////////////////////////
 
-      // Toggle between Upload and Check sections.
+      // Toggle between Upload and Check views.
       document.getElementById("upload-movie-menu").addEventListener("click", function () {
         document.getElementById("upload-movie").classList.add("active");
         document.getElementById("check-movie").classList.remove("active");
@@ -412,31 +405,33 @@
         loadMovies();
       });
 
-      // Upload form submission.
+      // Handle the upload form submission.
       document.getElementById("uploadForm").addEventListener("submit", function (e) {
         e.preventDefault();
-        const fileInput = document.getElementById("movieFile");
-        const language = document.getElementById("language").value;
-
-        // Grab optional fields.
-        const themeTitle = document.getElementById("themeTitle").value.trim();
-        const indexInput = document.getElementById("indexInput").value.trim();
-        const tags = document.getElementById("tags").value.trim();
-        const weblink = document.getElementById("weblink").value.trim();
-        const linkName = document.getElementById("link_name").value.trim();
-
-        const file = fileInput.files[0];
-        const fileName = file.name;
+        var fileInput = document.getElementById("movieFile");
+        var language = document.getElementById("language").value;
+        var themeTitle = document.getElementById("themeTitle").value.trim();
+        var indexInput = document.getElementById("indexInput").value.trim();
+        var tags = document.getElementById("tags").value.trim();
+        var weblink = document.getElementById("weblink").value.trim();
+        var linkName = document.getElementById("link_name").value.trim();
+        var file = fileInput.files[0];
+        if (!file) {
+          alert("Please select a file to upload.");
+          return;
+        }
+        var fileName = file.name;
 
         // Show spinner.
         document.getElementById("spinner").style.display = "block";
 
-        // Build the request body including the logged in user's email as user_name.
-        const requestBody = {
+        // Build request payload.
+        var requestBody = {
           user_name: loggedInUserEmail,
           filename: fileName,
           lang: language
         };
+
         if (themeTitle !== "") {
           requestBody.theme_title = themeTitle;
         }
@@ -453,83 +448,95 @@
           requestBody.link_name = linkName;
         }
 
-        console.log(requestBody);
-
-        // Call your backend to get a presigned URL.
+        // First, get your backend to generate a presigned URL.
         fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/generate-upload-url", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(requestBody)
         })
-          .then((response) => response.json())
-          .then((data) => {
-            const presignedUrl = data.body.url;
-            // Determine proper content type dynamically.
-            const contentType =
-              file.type ||
-              (file.name.toLowerCase().endsWith(".mov")
-                ? "video/quicktime"
-                : "video/mp4");
-            // Upload file to S3 using the presigned URL.
-            return fetch(presignedUrl, {
-              method: "PUT",
-              headers: { "Content-Type": contentType },
-              body: file
-            });
-          })
-          .then((response) => {
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(data) {
+          var presignedUrl = data.body.url;
+          // Determine content-type. Allow fallback for .mov files.
+          var contentType = file.type || (file.name.toLowerCase().endsWith(".mov") ? "video/quicktime" : "video/mp4");
+
+          // Use XMLHttpRequest (XHR) to handle the file upload.
+          var xhr = new XMLHttpRequest();
+          xhr.open("PUT", presignedUrl, true);
+          xhr.setRequestHeader("Content-Type", contentType);
+
+          // Optional: track progress for better mobile feedback.
+          xhr.upload.onprogress = function(event) {
+            if (event.lengthComputable) {
+              var percentComplete = (event.loaded / event.total) * 100;
+              console.log("Upload progress: " + percentComplete.toFixed(2) + "%");
+            }
+          };
+
+          xhr.onload = function() {
             document.getElementById("spinner").style.display = "none";
-            if (response.status === 200) {
+            if (xhr.status === 200) {
               alert("File uploaded successfully!");
             } else {
-              alert("Failed to upload file.");
+              alert("Failed to upload file. (Status: " + xhr.status + ")");
             }
-          })
-          .catch((error) => {
-            console.log(error);
+          };
+
+          xhr.onerror = function() {
             document.getElementById("spinner").style.display = "none";
-            alert(error);
-          });
+            alert("An error occurred during the file upload.");
+          };
+
+          xhr.send(file);
+        })
+        .catch(function(error) {
+          console.error(error);
+          document.getElementById("spinner").style.display = "none";
+          alert("Error: " + error);
+        });
       });
 
       // Pagination and movie listing.
-      let currentPage = 1;
-      const resultsPerPage = 10;
+      var currentPage = 1;
+      var resultsPerPage = 10;
 
       function loadMovies(page = 1) {
         currentPage = page;
-        // Send loggedInUserEmail as user_id in the request.
         fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/list-latest-uploaded-video", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_name: loggedInUserEmail })
         })
-          .then((response) => response.json())
-          .then((data) => {
-            const movies = data.body;
-            const totalMovies = movies.length;
-            const totalPages = Math.ceil(totalMovies / resultsPerPage);
-            const startIndex = (page - 1) * resultsPerPage;
-            const endIndex = Math.min(startIndex + resultsPerPage, totalMovies);
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(data) {
+          var movies = data.body;
+          var totalMovies = movies.length;
+          var totalPages = Math.ceil(totalMovies / resultsPerPage);
+          var startIndex = (page - 1) * resultsPerPage;
+          var endIndex = Math.min(startIndex + resultsPerPage, totalMovies);
+          
+          var movieList = document.getElementById("movieList");
+          movieList.innerHTML = "";
+          
+          for (var i = startIndex; i < endIndex; i++) {
+            var movie = movies[i];
+            var listItem = document.createElement("li");
+            var link = document.createElement("a");
+            link.href = movie.url;
+            link.textContent = movie.name;
+            link.target = "_blank";
+            listItem.appendChild(link);
+            movieList.appendChild(listItem);
+          }
 
-            const movieList = document.getElementById("movieList");
-            movieList.innerHTML = "";
-
-            for (let i = startIndex; i < endIndex; i++) {
-              const movie = movies[i];
-              const listItem = document.createElement("li");
-              const link = document.createElement("a");
-              link.href = movie.url;
-              link.textContent = movie.name;
-              link.target = "_blank";
-              listItem.appendChild(link);
-              movieList.appendChild(listItem);
-            }
-
-            // Update pagination.
-            document.getElementById("prevPage").classList.toggle("disabled", page === 1);
-            document.getElementById("nextPage").classList.toggle("disabled", page === totalPages);
-          });
+          // Update pagination controls.
+          document.getElementById("prevPage").classList.toggle("disabled", page === 1);
+          document.getElementById("nextPage").classList.toggle("disabled", page === totalPages);
+        });
       }
 
       document.getElementById("prevPage").addEventListener("click", function (e) {
