@@ -462,6 +462,9 @@
           // Determine content-type. Allow fallback for .mov files.
           var contentType = file.name.toLowerCase().endsWith(".mp4") ? "video/mp4" : "application/octet-stream";
 
+		  console.log(file.name)
+		  console.log(contentType)
+		  
           // Use XMLHttpRequest (XHR) to handle the file upload.
           var xhr = new XMLHttpRequest();
           xhr.open("PUT", presignedUrl, true);
