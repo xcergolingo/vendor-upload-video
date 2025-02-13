@@ -468,12 +468,12 @@
           xhr.setRequestHeader("Content-Type", contentType);
 
           // Optional: track progress for better mobile feedback.
-          xhr.upload.onprogress = function(event) {
-            if (event.lengthComputable) {
-              var percentComplete = (event.loaded / event.total) * 100;
-              console.log("Upload progress: " + percentComplete.toFixed(2) + "%");
-            }
-          };
+          //xhr.upload.onprogress = function(event) {
+          //  if (event.lengthComputable) {
+          //    var percentComplete = (event.loaded / event.total) * 100;
+          //    console.log("Upload progress: " + percentComplete.toFixed(2) + "%");
+          //  }
+          //};
 
           xhr.onload = function() {
             document.getElementById("spinner").style.display = "none";
