@@ -470,7 +470,9 @@
           var xhr = new XMLHttpRequest();
           xhr.open("PUT", presignedUrl, true);
           xhr.setRequestHeader("Content-Type", contentType);
-
+		  // Also ensure withCredentials is false unless needed
+		  xhr.withCredentials = false;
+	  
           // Optional: track progress for better mobile feedback.
           //xhr.upload.onprogress = function(event) {
           //  if (event.lengthComputable) {
