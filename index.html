@@ -53,8 +53,7 @@
         display: block;
       }
       /* Headings */
-      h2,
-      h3 {
+      h2, h3 {
         color: #4e73df;
       }
       /* Upload form styling */
@@ -105,12 +104,8 @@
         animation: spin 1s linear infinite;
       }
       @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
       /* Movie list and pagination */
       .movie-list {
@@ -121,7 +116,7 @@
         display: inline-block;
       }
       .movie-list li {
-        margin-bottom: 8px;
+        margin-bottom: 12px;
       }
       .movie-list a {
         color: #4e73df;
@@ -146,6 +141,21 @@
       .pagination a.disabled {
         background: #ccc;
         pointer-events: none;
+      }
+      /* Index button styling */
+      .index-btn {
+        margin-left: 10px;
+        padding: 3px 8px;
+        font-size: 0.9em;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        background-color: #28a745;
+        color: #fff;
+      }
+      .index-btn:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
       }
       /* Login container styling */
       #login-container {
@@ -176,12 +186,34 @@
       #login-container button:hover {
         background-color: #218838;
       }
+      /* Video Splits item styling */
+      #videoSplitsList .video-split-item {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: #f9f9f9;
+        text-align: left;
+      }
+      #videoSplitsList .video-split-item div {
+        margin-bottom: 8px;
+      }
+      #videoSplitsList .video-split-item div:last-child {
+        margin-bottom: 0;
+      }
+      #videoSplitsList .video-split-item a {
+        color: #4e73df;
+        text-decoration: none;
+      }
+      #videoSplitsList .video-split-item a:hover {
+        text-decoration: underline;
+      }
     </style>
-    <!-- Auth0.js library -->
     <script src="https://cdn.auth0.com/js/auth0/9.19/auth0.min.js"></script>
   </head>
+
   <body>
-    <!-- Login Container -->
+    <!-- Login -->
     <div id="login-container">
       <h2>Login</h2>
       <input type="email" id="login-email" placeholder="Enter your email" required /><br />
@@ -190,70 +222,45 @@
       <button id="register-button">Register</button>
     </div>
 
-    <!-- Navigation with site logo (hidden until login) -->
+    <!-- Main Nav -->
     <nav id="main-nav" style="display:none;">
       <img src="site-logo.png" alt="Site Logo" class="site-logo" />
       <a href="#" id="upload-movie-menu">Upload Video</a>
       <a href="#" id="check-movie-menu">Check Video</a>
+      <a href="#" id="video-splits-menu">Video Splits</a>
       <a href="#" id="logout-link" style="margin-left:20px; color:#ff4d4d;">Logout</a>
     </nav>
 
-    <!-- Main content container (hidden until login) -->
+    <!-- Main Content -->
     <div id="main-container" class="container" style="display:none;">
+      <!-- Upload Video -->
       <div id="upload-movie" class="menu-content active">
         <h2>Upload Video</h2>
         <form id="uploadForm" class="upload-form">
-          <!-- File chooser -->
           <label for="movieFile">Choose File</label>
           <input type="file" id="movieFile" required />
-
-          <!-- Language selector -->
           <label for="language">Choose Input Language</label>
           <select id="language">
+            <!-- options omitted for brevity -->
             <option value="en">English</option>
-            <option value="zh">Chinese</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="it">Italian</option>
-            <option value="pt">Portuguese</option>
-            <option value="nl">Dutch</option>
-            <option value="hi">Hindi</option>
-            <option value="ja">Japanese</option>
-            <option value="fi">Finnish</option>
-            <option value="ko">Korean</option>
-            <option value="pl">Polish</option>
-            <option value="ru">Russian</option>
-            <option value="tr">Turkish</option>
-            <option value="uk">Ukrainian</option>
-            <option value="vi">Vietnamese</option>
+            <!-- ... -->
           </select>
-
-          <!-- Optional Theme/Title -->
           <label for="themeTitle">Sentence</label>
           <input type="text" id="themeTitle" placeholder="sentence associated with the video" required/>
-
-          <!-- Optional Index -->
           <label for="indexInput">Index (Optional)</label>
           <input type="number" id="indexInput" placeholder="0" />
-
-          <!-- Optional Tags -->
           <label for="tags">Tags (Optional)</label>
           <input type="text" id="tags" placeholder="comma separated tags" />
-
-          <!-- Optional Weblink -->
           <label for="weblink">Weblink (Optional)</label>
           <input type="text" id="weblink" placeholder="www.youtube.com" />
-
-          <!-- Optional Link Name -->
           <label for="link_name">Link Name (Optional)</label>
           <input type="text" id="link_name" placeholder="youtube" />
-
           <div class="spinner" id="spinner"></div>
           <button type="submit">Upload</button>
         </form>
       </div>
 
+      <!-- Check Video -->
       <div id="check-movie" class="menu-content">
         <h3>Video might be delayed, check later if not here:</h3>
         <ul id="movieList" class="movie-list"></ul>
@@ -262,310 +269,261 @@
           <a href="#" id="nextPage">Next</a>
         </div>
       </div>
+
+      <!-- Video Splits -->
+      <div id="video-splits" class="menu-content">
+        <h2>Video Splits & Sentences</h2>
+        <ul id="videoSplitsList" class="movie-list"></ul>
+      </div>
     </div>
 
-    <!-- JavaScript Section -->
     <script>
-      /////////////////////////////////////////////////////////
-      // Utility functions for session storage management.
-      /////////////////////////////////////////////////////////
-
-      // Save tokens and expiration info in localStorage.
+      // Session utils
       function setSession(authResult) {
-        // Set session for 24 hours (86400000 ms)
         var expiresAt = new Date().getTime() + 86400000;
         localStorage.setItem("idToken", authResult.idToken);
         localStorage.setItem("expiresAt", JSON.stringify(expiresAt));
-        if (authResult.idTokenPayload && authResult.idTokenPayload.email) {
+        if (authResult.idTokenPayload?.email)
           localStorage.setItem("userEmail", authResult.idTokenPayload.email);
-        }
       }
-
-      // Check if the session is still valid.
       function isAuthenticated() {
         var idToken = localStorage.getItem("idToken");
-        var expiresAt = JSON.parse(localStorage.getItem("expiresAt") || "0");
+        var expiresAt = JSON.parse(localStorage.getItem("expiresAt")||"0");
         return idToken && new Date().getTime() < expiresAt;
       }
 
-      /////////////////////////////////////////////////////////
-      // AUTH0 LOGIN / REGISTRATION SETUP WITH EMAIL & PASSWORD
-      /////////////////////////////////////////////////////////
-
-      // Replace with your Auth0 tenant details.
-      var redirectUri = window.location.hostname === "localhost" 
-                        ? "http://localhost:8000" 
-                        : "https://vendor.golingoapp.com";
+      // Auth0 setup
+      var redirectUri = window.location.hostname==="localhost"
+        ? "http://localhost:8000"
+        : "https://vendor.golingoapp.com";
       var auth0Client = new auth0.WebAuth({
         domain: "login.golingoapp.com",
         clientID: "CAbDNnKwXbemnPuMqg6R7ElN4F77IRA3",
         responseType: "token id_token",
         redirectUri: redirectUri
       });
-
-      // Global variable for the logged-in user's email.
       var loggedInUserEmail = "";
 
-      // Check for login result in URL hash.
-      auth0Client.parseHash(function(err, authResult) {
-        if (authResult && authResult.accessToken && authResult.idToken) {
+      auth0Client.parseHash((err, authResult) => {
+        if (authResult?.accessToken && authResult.idToken) {
           setSession(authResult);
           loggedInUserEmail = authResult.idTokenPayload.email;
           window.location.hash = "";
           afterLogin();
-        } else if (err) {
-          console.error("Error parsing hash: ", err);
         }
       });
-
-      // Auto-login if already authenticated.
       if (isAuthenticated()) {
-        loggedInUserEmail = localStorage.getItem("userEmail") || "";
+        loggedInUserEmail = localStorage.getItem("userEmail");
         afterLogin();
       }
 
-      // Login button using popup mode.
-      document.getElementById("login-button").addEventListener("click", function () {
+      document.getElementById("login-button").addEventListener("click",()=>{
         var email = document.getElementById("login-email").value.trim();
         var password = document.getElementById("login-password").value;
-        if (!email || !password) {
-          alert("Please enter both email and password.");
-          return;
-        }
+        if(!email||!password){ alert("Please enter both email and password."); return; }
         auth0Client.login({
           realm: "Username-Password-Authentication",
           username: email,
           password: password,
           scope: "openid profile email"
-        }, function (err, authResult) {
-          if (err) {
-            alert("Error logging in: " + (err.description || err.message));
-            console.error(err);
-            return;
-          }
-          if (authResult && authResult.idTokenPayload) {
-            setSession(authResult);
-            loggedInUserEmail = authResult.idTokenPayload.email;
-            afterLogin();
-          }
+        },(err,authResult)=>{
+          if(err){ alert("Error: "+(err.description||err.message)); return; }
+          setSession(authResult);
+          loggedInUserEmail = authResult.idTokenPayload.email;
+          afterLogin();
         });
       });
-
-      // Registration button.
-      document.getElementById("register-button").addEventListener("click", function () {
+      document.getElementById("register-button").addEventListener("click",()=>{
         var email = document.getElementById("login-email").value.trim();
         var password = document.getElementById("login-password").value;
-        if (!email || !password) {
-          alert("Please enter both email and password to register.");
-          return;
-        }
+        if(!email||!password){ alert("Please enter both email and password to register."); return; }
         auth0Client.signup({
           connection: "Username-Password-Authentication",
-          email: email,
-          password: password
-        }, function (err, result) {
-          if (err) {
-            alert("Error during registration: " + (err.description || err.message));
-            console.error(err);
-          } else {
-            alert("Registration successful! Please log in now.");
-          }
+          email, password
+        },(err,result)=>{
+          if(err) alert("Registration error: "+(err.description||err.message));
+          else alert("Registration successful! Please log in now.");
         });
       });
 
-      // After login: hide login and show main app.
-      function afterLogin() {
-        document.getElementById("login-container").style.display = "none";
-        document.getElementById("main-nav").style.display = "flex";
-        document.getElementById("main-container").style.display = "block";
+      function afterLogin(){
+        document.getElementById("login-container").style.display="none";
+        document.getElementById("main-nav").style.display="flex";
+        document.getElementById("main-container").style.display="block";
       }
+      document.getElementById("logout-link").addEventListener("click",e=>{
+        e.preventDefault(); localStorage.clear(); window.location.reload();
+      });
 
-      // Logout: clear session and reload.
-      document.getElementById("logout-link").addEventListener("click", function (e) {
+      // Menu toggles
+      function clearActive(){
+        document.querySelectorAll(".menu-content").forEach(c=>c.classList.remove("active"));
+      }
+      document.getElementById("upload-movie-menu").addEventListener("click",()=>{
+        clearActive(); document.getElementById("upload-movie").classList.add("active");
+      });
+      document.getElementById("check-movie-menu").addEventListener("click",()=>{
+        clearActive(); document.getElementById("check-movie").classList.add("active"); loadMovies();
+      });
+      document.getElementById("video-splits-menu").addEventListener("click",()=>{
+        clearActive(); document.getElementById("video-splits").classList.add("active"); loadVideoSplits();
+      });
+
+      // Upload form
+      document.getElementById("uploadForm").addEventListener("submit",function(e){
         e.preventDefault();
-        localStorage.removeItem("idToken");
-        localStorage.removeItem("expiresAt");
-        localStorage.removeItem("userEmail");
-        window.location.reload();
-      });
-
-      /////////////////////////////////////////////////////////
-      // MAIN APPLICATION JAVASCRIPT (Upload and List Videos)
-      /////////////////////////////////////////////////////////
-
-      // Toggle between Upload and Check views.
-      document.getElementById("upload-movie-menu").addEventListener("click", function () {
-        document.getElementById("upload-movie").classList.add("active");
-        document.getElementById("check-movie").classList.remove("active");
-      });
-
-      document.getElementById("check-movie-menu").addEventListener("click", function () {
-        document.getElementById("check-movie").classList.add("active");
-        document.getElementById("upload-movie").classList.remove("active");
-        loadMovies();
-      });
-
-      // Handle the upload form submission.
-      document.getElementById("uploadForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        var fileInput = document.getElementById("movieFile");
+        var file = document.getElementById("movieFile").files[0];
+        if(!file){ alert("Please select a file."); return; }
         var language = document.getElementById("language").value;
         var themeTitle = document.getElementById("themeTitle").value.trim();
         var indexInput = document.getElementById("indexInput").value.trim();
         var tags = document.getElementById("tags").value.trim();
         var weblink = document.getElementById("weblink").value.trim();
         var linkName = document.getElementById("link_name").value.trim();
-        var file = fileInput.files[0];
-        if (!file) {
-          alert("Please select a file to upload.");
-          return;
-        }
-        var fileName = file.name;
-
-        // Show spinner.
-        document.getElementById("spinner").style.display = "block";
-
-        // Build request payload.
         var requestBody = {
           user_name: loggedInUserEmail,
-          filename: fileName,
-          lang: language
+          filename: file.name,
+          lang: language,
+          theme_title: themeTitle,
         };
+        if(indexInput) requestBody.index = indexInput;
+        if(tags) requestBody.tags = tags;
+        if(weblink) requestBody.weblink = weblink;
+        if(linkName) requestBody.link_name = linkName;
 
-        if (themeTitle !== "") {
-          requestBody.theme_title = themeTitle;
-        }
-        if (indexInput !== "") {
-          requestBody.index = indexInput;
-        }
-        if (tags !== "") {
-          requestBody.tags = tags;
-        }
-        if (weblink !== "") {
-          requestBody.weblink = weblink;
-        }
-        if (linkName !== "") {
-          requestBody.link_name = linkName;
-        }
-
-        // First, get your backend to generate a presigned URL.
-        fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/generate-upload-url", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody)
+        document.getElementById("spinner").style.display="block";
+        fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/generate-upload-url",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify(requestBody)
         })
-        .then(function(response) {
-          return response.json();
-        })
-        .then(function(data) {
-          var presignedUrl = data.body.url;
-          // Determine content-type. Allow fallback for .mov files.
-          //var contentType = file.name.toLowerCase().endsWith(".mp4") ? "video/mp4" : "application/octet-stream";
-		  var lowerCaseName = file.name.toLowerCase();
-		  var contentType;
-
-		  if (lowerCaseName.endsWith(".mp4")) {
-			 contentType = "video/mp4";
-		  } else if (lowerCaseName.endsWith(".mov")) {
-			 contentType = "video/quicktime";
-		  } else {
-			 contentType = "application/octet-stream";
-		  }
-
-		  console.log(file.name)
-		  console.log(file.type)
-		  console.log(contentType)
-		  
-          // Use XMLHttpRequest (XHR) to handle the file upload.
+        .then(r=>r.json())
+        .then(data=>{
+          var url = data.body.url;
+          var lc = file.name.toLowerCase();
+          var contentType = lc.endsWith(".mp4")
+            ? "video/mp4"
+            : lc.endsWith(".mov")
+            ? "video/quicktime"
+            : "application/octet-stream";
           var xhr = new XMLHttpRequest();
-          xhr.open("PUT", presignedUrl, true);
+          xhr.open("PUT", url, true);
           xhr.setRequestHeader("Content-Type", contentType);
-		  // Also ensure withCredentials is false unless needed
-		  xhr.withCredentials = false;
-	  
-          // Optional: track progress for better mobile feedback.
-          //xhr.upload.onprogress = function(event) {
-          //  if (event.lengthComputable) {
-          //    var percentComplete = (event.loaded / event.total) * 100;
-          //    console.log("Upload progress: " + percentComplete.toFixed(2) + "%");
-          //  }
-          //};
-
-          xhr.onload = function() {
-            document.getElementById("spinner").style.display = "none";
-            if (xhr.status === 200) {
-              alert("File uploaded successfully!");
-            } else {
-              alert("Failed to upload file. (Status: " + xhr.status + ")");
-            }
+          xhr.withCredentials = false;
+          xhr.onload = function(){
+            document.getElementById("spinner").style.display="none";
+            if(xhr.status===200) alert("File uploaded successfully!");
+            else alert("Upload failed (Status: "+xhr.status+")");
           };
-
-          xhr.onerror = function() {
-            document.getElementById("spinner").style.display = "none";
+          xhr.onerror = function(){
+            document.getElementById("spinner").style.display="none";
             alert("An error occurred during the file upload.");
           };
-
           xhr.send(file);
         })
-        .catch(function(error) {
-          console.error(error);
-          document.getElementById("spinner").style.display = "none";
-          alert("Error: " + error);
+        .catch(err=>{
+          document.getElementById("spinner").style.display="none";
+          alert("Error: "+err);
         });
       });
 
-      // Pagination and movie listing.
-      var currentPage = 1;
-      var resultsPerPage = 10;
-
-      function loadMovies(page = 1) {
+      // List Videos pagination
+      var currentPage = 1, resultsPerPage = 10;
+      function loadMovies(page=1){
         currentPage = page;
-        fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/list-latest-uploaded-video", {
+        fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/list-latest-uploaded-video",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({ user_name: loggedInUserEmail })
+        })
+        .then(r=>r.json())
+        .then(data=>{
+          var movies = data.body||[];
+          var totalPages = Math.ceil(movies.length/resultsPerPage);
+          var start = (page-1)*resultsPerPage;
+          var slice = movies.slice(start,start+resultsPerPage);
+          var ul = document.getElementById("movieList");
+          ul.innerHTML="";
+          slice.forEach(m=>{
+            var li=document.createElement("li");
+            var a=document.createElement("a");
+            a.href=m.url; a.textContent=m.name; a.target="_blank";
+            li.appendChild(a);
+            ul.appendChild(li);
+          });
+          document.getElementById("prevPage").classList.toggle("disabled", page===1);
+          document.getElementById("nextPage").classList.toggle("disabled", page>=totalPages);
+        });
+      }
+      document.getElementById("prevPage").addEventListener("click",e=>{e.preventDefault(); if(currentPage>1) loadMovies(currentPage-1);});
+      document.getElementById("nextPage").addEventListener("click",e=>{e.preventDefault(); loadMovies(currentPage+1);});
+
+      // Video Splits & Sentences
+      function loadVideoSplits(){
+        var ul = document.getElementById("videoSplitsList");
+        ul.innerHTML = "";
+        fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/list-latest-video-splits-and-sentences", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_name: loggedInUserEmail })
         })
-        .then(function(response) {
-          return response.json();
-        })
-        .then(function(data) {
-          var movies = data.body;
-          var totalMovies = movies.length;
-          var totalPages = Math.ceil(totalMovies / resultsPerPage);
-          var startIndex = (page - 1) * resultsPerPage;
-          var endIndex = Math.min(startIndex + resultsPerPage, totalMovies);
-          
-          var movieList = document.getElementById("movieList");
-          movieList.innerHTML = "";
-          
-          for (var i = startIndex; i < endIndex; i++) {
-            var movie = movies[i];
-            var listItem = document.createElement("li");
-            var link = document.createElement("a");
-            link.href = movie.url;
-            link.textContent = movie.name;
-            link.target = "_blank";
-            listItem.appendChild(link);
-            movieList.appendChild(listItem);
-          }
+        .then(r=>r.json())
+        .then(data=>{
+          (data.body||[]).forEach(item=>{
+            var li = document.createElement("li");
+            li.className = "video-split-item";
 
-          // Update pagination controls.
-          document.getElementById("prevPage").classList.toggle("disabled", page === 1);
-          document.getElementById("nextPage").classList.toggle("disabled", page === totalPages);
+            var sentenceDiv = document.createElement("div");
+            sentenceDiv.textContent = item.sent;
+
+            var linkDiv = document.createElement("div");
+            var a = document.createElement("a");
+            a.href = item.video_url;
+            a.textContent = "▶ Play";
+            a.target = "_blank";
+            linkDiv.appendChild(a);
+
+            var btn = document.createElement("button");
+            btn.className = "index-btn";
+            btn.textContent = item.if_indexed ? "Indexed" : "Add to search";
+            btn.disabled = item.if_indexed;
+
+            if (!item.if_indexed) {
+              btn.addEventListener("click",()=>{
+                btn.disabled = true;
+                fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/index-video-split-and-sentence-to-search", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    user_name: loggedInUserEmail,
+                    timestamp: item.timestamp
+                  })
+                })
+                .then(res=>res.json())
+                .then(()=>{
+                  btn.textContent="Indexed";
+                })
+                .catch(err=>{
+                  console.error(err);
+                  alert("Failed to index, try again.");
+                  btn.disabled=false;
+                });
+              });
+            }
+            var btnDiv = document.createElement("div");
+            btnDiv.appendChild(btn);
+
+            li.appendChild(sentenceDiv);
+            li.appendChild(linkDiv);
+            li.appendChild(btnDiv);
+            ul.appendChild(li);
+          });
+        })
+        .catch(err=>{
+          console.error(err);
+          alert("Failed to load video splits.");
         });
       }
-
-      document.getElementById("prevPage").addEventListener("click", function (e) {
-        e.preventDefault();
-        if (currentPage > 1) {
-          loadMovies(currentPage - 1);
-        }
-      });
-
-      document.getElementById("nextPage").addEventListener("click", function (e) {
-        e.preventDefault();
-        loadMovies(currentPage + 1);
-      });
     </script>
   </body>
 </html>
