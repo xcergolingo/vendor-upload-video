@@ -311,6 +311,7 @@
       <!-- Video Splits -->
       <div id="video-splits" class="menu-content">
         <h2>Video Splits & Sentences</h2>
+        <button id="downloadSelectedBtn" class="index-btn">Download</button>
         <ul id="videoSplitsList" class="movie-list"></ul>
       </div>
     </div>
@@ -341,6 +342,27 @@
         redirectUri: redirectUri
       });
       var loggedInUserEmail = "";
+      var downloadSelections = [];
+
+      function getDownloadSelectionId(split){
+        if(!split) return "";
+        if(split.timestamp) return String(split.timestamp);
+        var videoUrl = split.video_url || "";
+        var sent = split.sent || "";
+        return videoUrl + "__" + sent;
+      }
+
+      function upsertDownloadSelection(split){
+        var id = getDownloadSelectionId(split);
+        if(!id) return;
+        if(!downloadSelections.some(entry => entry.id === id)){
+          downloadSelections.push({
+            id: id,
+            sent: split.sent || "",
+            video_url: split.video_url || ""
+          });
+        }
+      }
 
       auth0Client.parseHash((err, authResult) => {
         if (authResult?.accessToken && authResult.idToken) {
@@ -499,6 +521,38 @@
       document.getElementById("prevPage").addEventListener("click",e=>{e.preventDefault(); if(currentPage>1) loadMovies(currentPage-1);});
       document.getElementById("nextPage").addEventListener("click",e=>{e.preventDefault(); loadMovies(currentPage+1);});
 
+      document.getElementById("downloadSelectedBtn").addEventListener("click", function(){
+        if(downloadSelections.length===0){
+          alert("Please add some video splits to download first.");
+          return;
+        }
+        var payload = {
+          courseName: "",
+          contents: downloadSelections.map(selection=>({
+            mPhoneticStory:"",
+            mVideoUrl: selection.video_url || "",
+            mTags:"",
+            mWebName:"",
+            mWebLink:"",
+            mContent: selection.sent || "",
+            mTranslatedContent:"",
+            mIndices:"",
+            mImageStr:"",
+            mPhoneticInfo:"",
+            mOnlineTranslation:""
+          }))
+        };
+        var blob = new Blob([JSON.stringify(payload)], { type: "text/plain" });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = "video_splits.txt";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      });
+
       // Video Splits & Sentences
       function loadVideoSplits(){
         var ul = document.getElementById("videoSplitsList");
@@ -551,8 +605,24 @@
                 });
               });
             }
+
+            var downloadBtn = document.createElement("button");
+            downloadBtn.className = "index-btn";
+            var alreadyAdded = downloadSelections.some(entry => entry.id === getDownloadSelectionId(item));
+            downloadBtn.textContent = alreadyAdded ? "Added" : "Add to download";
+            downloadBtn.disabled = alreadyAdded;
+
+            if (!alreadyAdded) {
+              downloadBtn.addEventListener("click",()=>{
+                upsertDownloadSelection(item);
+                downloadBtn.textContent = "Added";
+                downloadBtn.disabled = true;
+              });
+            }
+
             var btnDiv = document.createElement("div");
             btnDiv.appendChild(btn);
+            btnDiv.appendChild(downloadBtn);
 
             li.appendChild(sentenceDiv);
             li.appendChild(linkDiv);
