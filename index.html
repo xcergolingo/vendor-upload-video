@@ -311,7 +311,7 @@
       <!-- Video Splits -->
       <div id="video-splits" class="menu-content">
         <h2>Video Splits & Sentences</h2>
-        <button id="downloadSelectedBtn" class="index-btn">Download</button>
+        <button id="downloadSelectedBtn" class="index-btn" disabled>Download</button>
         <ul id="videoSplitsList" class="movie-list"></ul>
       </div>
     </div>
@@ -344,6 +344,11 @@
       var loggedInUserEmail = "";
       var downloadSelections = [];
 
+      function updateDownloadButtonState(){
+        var btn = document.getElementById("downloadSelectedBtn");
+        btn.disabled = downloadSelections.length === 0;
+      }
+
       function getDownloadSelectionId(split){
         if(!split) return "";
         if(split.timestamp) return String(split.timestamp);
@@ -362,6 +367,7 @@
             video_url: split.video_url || ""
           });
         }
+        updateDownloadButtonState();
       }
 
       auth0Client.parseHash((err, authResult) => {
@@ -435,7 +441,7 @@
         var file = document.getElementById("movieFile").files[0];
         if(!file){ alert("Please select a file."); return; }
         var language = document.getElementById("language").value;
-        var outputLang = document.getElementById("outputLanguage").value;  // NEW
+        var outputLang = document.getElementById("outputLanguage").value;
         var themeTitle = document.getElementById("themeTitle").value.trim();
         var indexInput = document.getElementById("indexInput").value.trim();
         var tags = document.getElementById("tags").value.trim();
@@ -446,7 +452,7 @@
           user_name: loggedInUserEmail,
           filename: file.name,
           lang: language,
-          output_lang: outputLang,           // NEW
+          output_lang: outputLang,
           theme_title: themeTitle
         };
         if(indexInput) requestBody.index = indexInput;
@@ -629,12 +635,15 @@
             li.appendChild(btnDiv);
             ul.appendChild(li);
           });
+          updateDownloadButtonState();
         })
         .catch(err=>{
           console.error(err);
           alert("Failed to load video splits.");
         });
       }
+
+      updateDownloadButtonState();
     </script>
   </body>
 </html>
