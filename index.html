@@ -53,7 +53,8 @@
         display: block;
       }
       /* Headings */
-      h2, h3 {
+      h2,
+      h3 {
         color: #4e73df;
       }
       /* Upload form styling */
@@ -104,8 +105,12 @@
         animation: spin 1s linear infinite;
       }
       @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
       /* Movie list and pagination */
       .movie-list {
@@ -201,12 +206,9 @@
       #videoSplitsList .video-split-item div:last-child {
         margin-bottom: 0;
       }
-      #videoSplitsList .video-split-item a {
-        color: #4e73df;
-        text-decoration: none;
-      }
-      #videoSplitsList .video-split-item a:hover {
-        text-decoration: underline;
+      #videoSplitsList .video-split-item video {
+        width: 100%;
+        border-radius: 4px;
       }
     </style>
     <script src="https://cdn.auth0.com/js/auth0/9.19/auth0.min.js"></script>
@@ -284,7 +286,7 @@
           </select>
 
           <label for="themeTitle">Sentence</label>
-          <input type="text" id="themeTitle" placeholder="sentence associated with the video" required/>
+          <input type="text" id="themeTitle" placeholder="sentence associated with the video" required />
           <label for="indexInput">Index (Optional)</label>
           <input type="number" id="indexInput" placeholder="0" step="any" inputmode="decimal" />
           <label for="tags">Tags (Optional)</label>
@@ -327,14 +329,15 @@
       }
       function isAuthenticated() {
         var idToken = localStorage.getItem("idToken");
-        var expiresAt = JSON.parse(localStorage.getItem("expiresAt")||"0");
+        var expiresAt = JSON.parse(localStorage.getItem("expiresAt") || "0");
         return idToken && new Date().getTime() < expiresAt;
       }
 
       // Auth0 setup
-      var redirectUri = window.location.hostname==="localhost"
-        ? "http://localhost:8000"
-        : "https://vendor.golingoapp.com";
+      var redirectUri =
+        window.location.hostname === "localhost"
+          ? "http://localhost:8000"
+          : "https://vendor.golingoapp.com";
       var auth0Client = new auth0.WebAuth({
         domain: "login.golingoapp.com",
         clientID: "CAbDNnKwXbemnPuMqg6R7ElN4F77IRA3",
@@ -344,23 +347,23 @@
       var loggedInUserEmail = "";
       var downloadSelections = [];
 
-      function updateDownloadButtonState(){
+      function updateDownloadButtonState() {
         var btn = document.getElementById("downloadSelectedBtn");
         btn.disabled = downloadSelections.length === 0;
       }
 
-      function getDownloadSelectionId(split){
-        if(!split) return "";
-        if(split.timestamp) return String(split.timestamp);
+      function getDownloadSelectionId(split) {
+        if (!split) return "";
+        if (split.timestamp) return String(split.timestamp);
         var videoUrl = split.video_url || "";
         var sent = split.sent || "";
         return videoUrl + "__" + sent;
       }
 
-      function upsertDownloadSelection(split){
+      function upsertDownloadSelection(split) {
         var id = getDownloadSelectionId(split);
-        if(!id) return;
-        if(!downloadSelections.some(entry => entry.id === id)){
+        if (!id) return;
+        if (!downloadSelections.some(entry => entry.id === id)) {
           downloadSelections.push({
             id: id,
             sent: split.sent || "",
@@ -383,264 +386,336 @@
         afterLogin();
       }
 
-      document.getElementById("login-button").addEventListener("click",()=>{
+      document.getElementById("login-button").addEventListener("click", () => {
         var email = document.getElementById("login-email").value.trim();
         var password = document.getElementById("login-password").value;
-        if(!email||!password){ alert("Please enter both email and password."); return; }
-        auth0Client.login({
-          realm: "Username-Password-Authentication",
-          username: email,
-          password: password,
-          scope: "openid profile email"
-        },(err,authResult)=>{
-          if(err){ alert("Error: "+(err.description||err.message)); return; }
-          setSession(authResult);
-          loggedInUserEmail = authResult.idTokenPayload.email;
-          afterLogin();
-        });
+        if (!email || !password) {
+          alert("Please enter both email and password.");
+          return;
+        }
+        auth0Client.login(
+          {
+            realm: "Username-Password-Authentication",
+            username: email,
+            password: password,
+            scope: "openid profile email"
+          },
+          (err, authResult) => {
+            if (err) {
+              alert("Error: " + (err.description || err.message));
+              return;
+            }
+            setSession(authResult);
+            loggedInUserEmail = authResult.idTokenPayload.email;
+            afterLogin();
+          }
+        );
       });
-      document.getElementById("register-button").addEventListener("click",()=>{
-        var email = document.getElementById("login-email").value.trim();
-        var password = document.getElementById("login-password").value;
-        if(!email||!password){ alert("Please enter both email and password to register."); return; }
-        auth0Client.signup({
-          connection: "Username-Password-Authentication",
-          email, password
-        },(err,result)=>{
-          if(err) alert("Registration error: "+(err.description||err.message));
-          else alert("Registration successful! Please log in now.");
+      document
+        .getElementById("register-button")
+        .addEventListener("click", () => {
+          var email = document.getElementById("login-email").value.trim();
+          var password = document.getElementById("login-password").value;
+          if (!email || !password) {
+            alert("Please enter both email and password to register.");
+            return;
+          }
+          auth0Client.signup(
+            {
+              connection: "Username-Password-Authentication",
+              email,
+              password
+            },
+            (err, result) => {
+              if (err)
+                alert("Registration error: " + (err.description || err.message));
+              else alert("Registration successful! Please log in now.");
+            }
+          );
         });
-      });
 
-      function afterLogin(){
-        document.getElementById("login-container").style.display="none";
-        document.getElementById("main-nav").style.display="flex";
-        document.getElementById("main-container").style.display="block";
+      function afterLogin() {
+        document.getElementById("login-container").style.display = "none";
+        document.getElementById("main-nav").style.display = "flex";
+        document.getElementById("main-container").style.display = "block";
       }
-      document.getElementById("logout-link").addEventListener("click",e=>{
-        e.preventDefault(); localStorage.clear(); window.location.reload();
+      document.getElementById("logout-link").addEventListener("click", e => {
+        e.preventDefault();
+        localStorage.clear();
+        window.location.reload();
       });
 
       // Menu toggles
-      function clearActive(){
-        document.querySelectorAll(".menu-content").forEach(c=>c.classList.remove("active"));
+      function clearActive() {
+        document.querySelectorAll(".menu-content").forEach(c =>
+          c.classList.remove("active")
+        );
       }
-      document.getElementById("upload-movie-menu").addEventListener("click",()=>{
-        clearActive(); document.getElementById("upload-movie").classList.add("active");
-      });
-      document.getElementById("check-movie-menu").addEventListener("click",()=>{
-        clearActive(); document.getElementById("check-movie").classList.add("active"); loadMovies();
-      });
-      document.getElementById("video-splits-menu").addEventListener("click",()=>{
-        clearActive(); document.getElementById("video-splits").classList.add("active"); loadVideoSplits();
-      });
+      document
+        .getElementById("upload-movie-menu")
+        .addEventListener("click", () => {
+          clearActive();
+          document.getElementById("upload-movie").classList.add("active");
+        });
+      document
+        .getElementById("check-movie-menu")
+        .addEventListener("click", () => {
+          clearActive();
+          document.getElementById("check-movie").classList.add("active");
+          loadMovies();
+        });
+      document
+        .getElementById("video-splits-menu")
+        .addEventListener("click", () => {
+          clearActive();
+          document.getElementById("video-splits").classList.add("active");
+          loadVideoSplits();
+        });
 
       // Upload form
-      document.getElementById("uploadForm").addEventListener("submit",function(e){
-        e.preventDefault();
-        var file = document.getElementById("movieFile").files[0];
-        if(!file){ alert("Please select a file."); return; }
-        var language = document.getElementById("language").value;
-        var outputLang = document.getElementById("outputLanguage").value;
-        var themeTitle = document.getElementById("themeTitle").value.trim();
-        var indexInput = document.getElementById("indexInput").value.trim();
-        var tags = document.getElementById("tags").value.trim();
-        var weblink = document.getElementById("weblink").value.trim();
-        var linkName = document.getElementById("link_name").value.trim();
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          var file = document.getElementById("movieFile").files[0];
+          if (!file) {
+            alert("Please select a file.");
+            return;
+          }
+          var language = document.getElementById("language").value;
+          var outputLang = document.getElementById("outputLanguage").value;
+          var themeTitle = document.getElementById("themeTitle").value.trim();
+          var indexInput = document.getElementById("indexInput").value.trim();
+          var tags = document.getElementById("tags").value.trim();
+          var weblink = document.getElementById("weblink").value.trim();
+          var linkName = document.getElementById("link_name").value.trim();
 
-        var requestBody = {
-          user_name: loggedInUserEmail,
-          filename: file.name,
-          lang: language,
-          output_lang: outputLang,
-          theme_title: themeTitle
-        };
-        if(indexInput) requestBody.index = indexInput;
-        if(tags)        requestBody.tags = tags;
-        if(weblink)     requestBody.weblink = weblink;
-        if(linkName)    requestBody.link_name = linkName;
+          var requestBody = {
+            user_name: loggedInUserEmail,
+            filename: file.name,
+            lang: language,
+            output_lang: outputLang,
+            theme_title: themeTitle
+          };
+          if (indexInput) requestBody.index = indexInput;
+          if (tags) requestBody.tags = tags;
+          if (weblink) requestBody.weblink = weblink;
+          if (linkName) requestBody.link_name = linkName;
 
-        document.getElementById("spinner").style.display="block";
-        fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/generate-upload-url",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify(requestBody)
-        })
-        .then(r=>r.json())
-        .then(data=>{
-          var url = data.body.url;
-          var lc = file.name.toLowerCase();
-          var contentType = lc.endsWith(".mp4")
-            ? "video/mp4"
-            : lc.endsWith(".mov")
-            ? "video/quicktime"
-            : "application/octet-stream";
-          var xhr = new XMLHttpRequest();
-          xhr.open("PUT", url, true);
-          xhr.setRequestHeader("Content-Type", contentType);
-          xhr.withCredentials = false;
-          xhr.onload = function(){
-            document.getElementById("spinner").style.display="none";
-            if(xhr.status===200) alert("File uploaded successfully!");
-            else alert("Upload failed (Status: "+xhr.status+")");
-          };
-          xhr.onerror = function(){
-            document.getElementById("spinner").style.display="none";
-            alert("An error occurred during the file upload.");
-          };
-          xhr.send(file);
-        })
-        .catch(err=>{
-          document.getElementById("spinner").style.display="none";
-          alert("Error: "+err);
+          document.getElementById("spinner").style.display = "block";
+          fetch(
+            "https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/generate-upload-url",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(requestBody)
+            }
+          )
+            .then(r => r.json())
+            .then(data => {
+              var url = data.body.url;
+              var lc = file.name.toLowerCase();
+              var contentType = lc.endsWith(".mp4")
+                ? "video/mp4"
+                : lc.endsWith(".mov")
+                ? "video/quicktime"
+                : "application/octet-stream";
+              var xhr = new XMLHttpRequest();
+              xhr.open("PUT", url, true);
+              xhr.setRequestHeader("Content-Type", contentType);
+              xhr.withCredentials = false;
+              xhr.onload = function () {
+                document.getElementById("spinner").style.display = "none";
+                if (xhr.status === 200) alert("File uploaded successfully!");
+                else alert("Upload failed (Status: " + xhr.status + ")");
+              };
+              xhr.onerror = function () {
+                document.getElementById("spinner").style.display = "none";
+                alert("An error occurred during the file upload.");
+              };
+              xhr.send(file);
+            })
+            .catch(err => {
+              document.getElementById("spinner").style.display = "none";
+              alert("Error: " + err);
+            });
         });
-      });
 
       // List Videos pagination
-      var currentPage = 1, resultsPerPage = 10;
-      function loadMovies(page=1){
+      var currentPage = 1,
+        resultsPerPage = 10;
+      function loadMovies(page = 1) {
         currentPage = page;
-        fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/list-latest-uploaded-video",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({ user_name: loggedInUserEmail })
-        })
-        .then(r=>r.json())
-        .then(data=>{
-          var movies = data.body||[];
-          var totalPages = Math.ceil(movies.length/resultsPerPage);
-          var start = (page-1)*resultsPerPage;
-          var slice = movies.slice(start,start+resultsPerPage);
-          var ul = document.getElementById("movieList");
-          ul.innerHTML="";
-          slice.forEach(m=>{
-            var li=document.createElement("li");
-            var a=document.createElement("a");
-            a.href=m.url; a.textContent=m.name; a.target="_blank";
-            li.appendChild(a);
-            ul.appendChild(li);
+        fetch(
+          "https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/list-latest-uploaded-video",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_name: loggedInUserEmail })
+          }
+        )
+          .then(r => r.json())
+          .then(data => {
+            var movies = data.body || [];
+            var totalPages = Math.ceil(movies.length / resultsPerPage);
+            var start = (page - 1) * resultsPerPage;
+            var slice = movies.slice(start, start + resultsPerPage);
+            var ul = document.getElementById("movieList");
+            ul.innerHTML = "";
+            slice.forEach(m => {
+              var li = document.createElement("li");
+              var a = document.createElement("a");
+              a.href = m.url;
+              a.textContent = m.name;
+              a.target = "_blank";
+              li.appendChild(a);
+              ul.appendChild(li);
+            });
+            document
+              .getElementById("prevPage")
+              .classList.toggle("disabled", page === 1);
+            document
+              .getElementById("nextPage")
+              .classList.toggle("disabled", page >= totalPages);
           });
-          document.getElementById("prevPage").classList.toggle("disabled", page===1);
-          document.getElementById("nextPage").classList.toggle("disabled", page>=totalPages);
-        });
       }
-      document.getElementById("prevPage").addEventListener("click",e=>{e.preventDefault(); if(currentPage>1) loadMovies(currentPage-1);});
-      document.getElementById("nextPage").addEventListener("click",e=>{e.preventDefault(); loadMovies(currentPage+1);});
-
-      document.getElementById("downloadSelectedBtn").addEventListener("click", function(){
-        if(downloadSelections.length===0){
-          alert("Please add some video splits to download first.");
-          return;
-        }
-        var payload = {
-          courseName: "",
-          contents: downloadSelections.map(selection=>({
-            mPhoneticStory:"",
-            mVideoUrl: selection.video_url || "",
-            mTags:"",
-            mWebName:"",
-            mWebLink:"",
-            mContent: selection.sent || "",
-            mTranslatedContent:"",
-            mIndices:"",
-            mImageStr:"",
-            mPhoneticInfo:"",
-            mOnlineTranslation:""
-          }))
-        };
-        var blob = new Blob([JSON.stringify(payload)], { type: "text/plain" });
-        var url = URL.createObjectURL(blob);
-        var link = document.createElement("a");
-        link.href = url;
-        link.download = "video_splits.txt";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+      document.getElementById("prevPage").addEventListener("click", e => {
+        e.preventDefault();
+        if (currentPage > 1) loadMovies(currentPage - 1);
+      });
+      document.getElementById("nextPage").addEventListener("click", e => {
+        e.preventDefault();
+        loadMovies(currentPage + 1);
       });
 
-      // Video Splits & Sentences
-      function loadVideoSplits(){
-        var ul = document.getElementById("videoSplitsList");
-        ul.innerHTML = "";
-        fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/list-latest-video-splits-and-sentences", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_name: loggedInUserEmail })
-        })
-        .then(r=>r.json())
-        .then(data=>{
-          (data.body||[]).forEach(item=>{
-            var li = document.createElement("li");
-            li.className = "video-split-item";
-
-            var sentenceDiv = document.createElement("div");
-            sentenceDiv.textContent = item.sent;
-
-            var linkDiv = document.createElement("div");
-            var a = document.createElement("a");
-            a.href = item.video_url;
-            a.textContent = "▶ Play";
-            a.target = "_blank";
-            linkDiv.appendChild(a);
-
-            var btn = document.createElement("button");
-            btn.className = "index-btn";
-            btn.textContent = item.if_indexed ? "Indexed" : "Add to search";
-            btn.disabled = item.if_indexed;
-
-            if (!item.if_indexed) {
-              btn.addEventListener("click",()=>{
-                btn.disabled = true;
-                fetch("https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/index-video-split-and-sentence-to-search", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    user_name: loggedInUserEmail,
-                    timestamp: item.timestamp
-                  })
-                })
-                .then(res=>res.json())
-                .then(()=>{
-                  btn.textContent="Indexed";
-                })
-                .catch(err=>{
-                  console.error(err);
-                  alert("Failed to index, try again.");
-                  btn.disabled=false;
-                });
-              });
-            }
-
-            var downloadBtn = document.createElement("button");
-            downloadBtn.className = "index-btn";
-            var alreadyAdded = downloadSelections.some(entry => entry.id === getDownloadSelectionId(item));
-            downloadBtn.textContent = alreadyAdded ? "Added" : "Add to download";
-            downloadBtn.disabled = alreadyAdded;
-
-            if (!alreadyAdded) {
-              downloadBtn.addEventListener("click",()=>{
-                upsertDownloadSelection(item);
-                downloadBtn.textContent = "Added";
-                downloadBtn.disabled = true;
-              });
-            }
-
-            var btnDiv = document.createElement("div");
-            btnDiv.appendChild(btn);
-            btnDiv.appendChild(downloadBtn);
-
-            li.appendChild(sentenceDiv);
-            li.appendChild(linkDiv);
-            li.appendChild(btnDiv);
-            ul.appendChild(li);
+      document
+        .getElementById("downloadSelectedBtn")
+        .addEventListener("click", function () {
+          if (downloadSelections.length === 0) {
+            alert("Please add some video splits to download first.");
+            return;
+          }
+          var payload = {
+            courseName: "",
+            contents: downloadSelections.map(selection => ({
+              mPhoneticStory: "",
+              mVideoUrl: selection.video_url || "",
+              mTags: "",
+              mWebName: "",
+              mWebLink: "",
+              mContent: selection.sent || "",
+              mTranslatedContent: "",
+              mIndices: "",
+              mImageStr: "",
+              mPhoneticInfo: "",
+              mOnlineTranslation: ""
+            }))
+          };
+          var blob = new Blob([JSON.stringify(payload)], {
+            type: "text/plain"
           });
-          updateDownloadButtonState();
-        })
-        .catch(err=>{
-          console.error(err);
-          alert("Failed to load video splits.");
+          var url = URL.createObjectURL(blob);
+          var link = document.createElement("a");
+          link.href = url;
+          link.download = "video_splits.txt";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
         });
+
+      // Video Splits & Sentences
+      function loadVideoSplits() {
+        var ul = document.getElementById("videoSplitsList");
+        ul.inner(nullptr);
+        fetch(
+          "https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/list-latest-video-splits-and-sentences",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_name: loggedInUserEmail })
+          }
+        )
+          .then(r => r.json())
+          .then(data => {
+            (data.body || []).forEach(item => {
+              var li = document.createElement("li");
+              li.className = "video-split-item";
+
+              var sentenceDiv = document.createElement("div");
+              sentenceDiv.textContent = item.sent;
+
+              var videoDiv = document.createElement("div");
+              var videoEl = document.createElement("video");
+              videoEl.controls = true;
+              videoEl.src = item.video_url;
+              videoEl.setAttribute("preload", "metadata");
+              videoDiv.appendChild(videoEl);
+
+              var btn = document.createElement("button");
+              btn.className = "index-btn";
+              btn.textContent = item.if_indexed ? "Indexed" : "Add to search";
+              btn.disabled = item.if_indexed;
+
+              if (!item.if_indexed) {
+                btn.addEventListener("click", () => {
+                  btn.disabled = true;
+                  fetch(
+                    "https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/index-video-split-and-sentence-to-search",
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        user_name: loggedInUserEmail,
+                        timestamp: item.timestamp
+                      })
+                    }
+                  )
+                    .then(res => res.json())
+                    .then(() => {
+                      btn.textContent = "Indexed";
+                    })
+                    .catch(err => {
+                      console.error(err);
+                      alert("Failed to index, try again.");
+                      btn.disabled = false;
+                    });
+                });
+              }
+
+              var downloadBtn = document.createElement("button");
+              downloadBtn.className = "index-btn";
+              var alreadyAdded = downloadSelections.some(
+                entry => entry.id === getDownloadSelectionId(item)
+              );
+              downloadBtn.textContent = alreadyAdded
+                ? "Added"
+                : "Add to download";
+              downloadBtn.disabled = alreadyAdded;
+
+              if (!alreadyAdded) {
+                downloadBtn.addEventListener("click", () => {
+                  upsertDownloadSelection(item);
+                  downloadBtn.textContent = "Added";
+                  downloadBtn.disabled = true;
+                });
+              }
+
+              var btnDiv = document.createElement("div");
+              btnDiv.appendChild(btn);
+              btnDiv.appendChild(downloadBtn);
+
+              li.appendChild(sentenceDiv);
+              li.appendChild(videoDiv);
+              li.appendChild(btnDiv);
+              ul.appendChild(li);
+            });
+            updateDownloadButtonState();
+          })
+          .catch(err => {
+            console.error(err);
+            alert("Failed to load video splits.");
+          });
       }
 
       updateDownloadButtonState();
