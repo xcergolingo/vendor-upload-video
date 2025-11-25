@@ -627,7 +627,7 @@
       // Video Splits & Sentences
       function loadVideoSplits() {
         var ul = document.getElementById("videoSplitsList");
-        ul.inner(nullptr);
+        ul.innerHTML = "";
         fetch(
           "https://igr9sg55zi.execute-api.us-east-1.amazonaws.com/prod/list-latest-video-splits-and-sentences",
           {
